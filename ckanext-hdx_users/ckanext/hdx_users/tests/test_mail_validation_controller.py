@@ -22,13 +22,13 @@ NotFound = logic.NotFound
 
 class TestHDXControllerPage(hdx_test_with_inds_and_orgs.HDXWithIndsAndOrgsTest):
 
-    @classmethod
-    def _load_plugins(cls):
-        try:
-            hdx_test_base.load_plugin('hdx_users hdx_user_extra hdx_package hdx_org_group hdx_theme')
-        except Exception as e:
-            log.warn('Module already loaded')
-            log.info(str(e))
+    # @classmethod
+    # def _load_plugins(cls):
+    #     try:
+    #         hdx_test_base.load_plugin('hdx_users hdx_user_extra hdx_package hdx_org_group hdx_theme')
+    #     except Exception as e:
+    #         log.warn('Module already loaded')
+    #         log.info(str(e))
 
     @classmethod
     def _get_action(cls, action_name):
@@ -38,33 +38,15 @@ class TestHDXControllerPage(hdx_test_with_inds_and_orgs.HDXWithIndsAndOrgsTest):
     def _create_test_data(cls, create_datasets=True, create_members=False):
         super(TestHDXControllerPage, cls)._create_test_data(create_datasets=True, create_members=True)
 
-    def _get_url(self, url, apikey=None):
-        if apikey:
-            page = self.app.get(url, headers={
-                'Authorization': unicodedata.normalize('NFKD', apikey).encode('ascii', 'ignore')})
-        else:
-            page = self.app.get(url)
-        return page
+    # def _get_url(self, url, apikey=None):
+    #     if apikey:
+    #         page = self.app.get(url, headers={
+    #             'Authorization': unicodedata.normalize('NFKD', apikey).encode('ascii', 'ignore')})
+    #     else:
+    #         page = self.app.get(url)
+    #     return page
 
-    def test_permission_page_load(self):
-
-        # user = model.User.by_name('tester')
-        # user.email = 'test@test.com'
-        # url = h.url_for(controller='ckanext.hdx_users.controllers.mail_validation_controller:ValidationController',
-        #                 action='new_login')
-        # try:
-        #     res = self._get_url(url, user.apikey)
-        #     assert '200' in res.body
-        #     assert 'Forgot your password?' not in res.body
-        # except Exception, ex:
-        #     assert False
-        #
-        # try:
-        #     res = self._get_url(url)
-        #     assert '200' in res.body
-        #     assert 'Forgot your password?' in res.body
-        # except Exception, ex:
-        #     assert False
+    def test_first_login(self):
         user = model.User.by_name('tester')
         context = {'model': model, 'session': model.Session, 'user': 'tester', 'auth_user_obj': user}
         res = self._get_action('hdx_first_login')(context, {})
@@ -73,11 +55,21 @@ class TestHDXControllerPage(hdx_test_with_inds_and_orgs.HDXWithIndsAndOrgsTest):
         user = model.User.by_name('testsysadmin')
         context_sysadmin = {'model': model, 'session': model.Session, 'user': 'testsysadmin', 'auth_user_obj': user}
         res = self._get_action('hdx_first_login')(context_sysadmin, {})
-        assert True
+        assert res
 
         context_nouser = {'model': model, 'session': model.Session}
         try:
             res = self._get_action('hdx_first_login')(context_nouser, {})
+            assert False
+        except Exception, ex:
+            assert True
+            assert 'requires an authenticated user' in ex.message
+        assert True
+
+        context_usernotfound = {'model': model, 'session': model.Session, 'user': 'usernotfound', 'auth_user_obj': None}
+        try:
+            res = self._get_action('hdx_first_login')(context_usernotfound, {})
+            assert False
         except Exception, ex:
             assert True
             assert 'requires an authenticated user' in ex.message
